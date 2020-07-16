@@ -8,14 +8,13 @@ pipeline {
     agent { 
         docker { 
             image 'node' 
-            // args '-v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker'
         }
     }
 
     environment {
         CONTAINER_NAME = "simple-node-js-react-npm-app"
         CONTAINER_EXTERNAL_PORT = 18170
-        CONTAINER_PORT = 3000
+        CONTAINER_PORT = 80
         REGISTRY_HOST = "dev.logicinfo.com"
         REGISTRY_IMAGE_ID = "${REGISTRY_HOST}/${CONTAINER_NAME}"
         REGISTRY_URL = "https://${REGISTRY_HOST}"
