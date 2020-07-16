@@ -40,16 +40,21 @@ pipeline {
     }
 
     stages {
-        stage('Build App') { 
+        stage('Install Node Modules') { 
             steps {
                 sh 'npm install'
+            }
+        }
+        
+        stage('Build App') { 
+            steps {
                 sh 'npm run build'
             }
         }
         
         stage('Test App') { 
             steps {
-                sh 'npm run test'
+                sh 'npm test'
             }
         }
         
