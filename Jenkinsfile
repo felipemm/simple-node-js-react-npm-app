@@ -21,6 +21,7 @@ pipeline {
         REGISTRY_CREDENTIAL_ID = "adm-jenkins-nexus"
         NEXUS_CREDENTIAL_ID = "adm-jenkins-docker-srv"
         DOCKER_RUN_EXTRA_ARGS = "--network=postgres-network"
+        CI = 'true' //https://create-react-app.dev/docs/running-tests/#continuous-integration
     }
 
 
@@ -48,7 +49,7 @@ pipeline {
         
         stage('Test App') { 
             steps {
-                sh 'npm test --watchAll'
+                sh 'npm test'
             }
         }
 
