@@ -5,7 +5,12 @@ dockerRemote.allowAnyHosts = true
 
 pipeline {
 
-    agent { docker { image 'node:6-alpine' } }
+    agent { 
+        docker { 
+            image 'node:6-alpine' 
+            args '-v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker'
+        }
+    }
 
     environment {
         CONTAINER_NAME = "simple-node-js-react-npm-app"
