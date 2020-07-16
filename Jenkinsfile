@@ -46,15 +46,15 @@ pipeline {
             }
         }
         
+        stage('Test App') { 
+            steps {
+                sh 'npm test --watchAll'
+            }
+        }
+
         stage('Build App') { 
             steps {
                 sh 'npm run build'
-            }
-        }
-        
-        stage('Test App') { 
-            steps {
-                sh 'npm test'
             }
         }
         
