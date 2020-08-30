@@ -26,7 +26,9 @@ pipeline {
     
     stages {
         stage('Test') {
-            sh 'echo ${env.GIT_BRANCH}'
+            steps{
+                sh 'echo ${env.GIT_BRANCH}'
+            }
         }
 
         //stage('Build App') { 
