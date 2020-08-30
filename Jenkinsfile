@@ -27,7 +27,8 @@ pipeline {
     stages {
         stage('Test') {
             steps{
-                sh 'echo ${env.GIT_BRANCH}'
+                sh 'echo ${GIT_BRANCH}'
+                sh 'export'
             }
         }
 
