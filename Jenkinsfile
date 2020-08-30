@@ -1,98 +1,57 @@
-def dockerRemote = [:]
-dockerRemote.name = 'docker'
-dockerRemote.host = 'srv-newserv-docker'
-dockerRemote.allowAnyHosts = true
-
 pipeline {
 
-    agent { 
-        docker { 
-            image 'node' 
-        }
-    }
+    agent any
 
     environment {
-        CONTAINER_NAME = "simple-node-js-react-npm-app"
-        CONTAINER_EXTERNAL_PORT = 18170
-        CONTAINER_PORT = 80
+        ENV = "dev"
+        APP_NAME = "raas-db"
+        EXTERNAL_PORT = 5556
+        CONTAINER_PORT = 5432
+        DOCKER_VOLUME = "${APP_NAME}-data-${ENV}"
+        DOCKER_VOLUME_MOUNTPOINT="${DOCKER_VOLUME}:/var/lib/postgresql/data"
+        DOCKER_RUN_EXTRA_ARGS = "--memory 2g --name ${APP_NAME}-${ENV} --publish ${EXTERNAL_PORT}:${CONTAINER_PORT} --volume ${DOCKER_VOLUME_MOUNTPOINT} --restart always -h ${APP_NAME}-${ENV} -e 'POSTGRES_PASSWORD=Logic123'"
+
+        DOCKER_REMOTE_SERVER = 'tcp://srv-newserv-docker:2375'
+        CONTAINER_NAME = "${APP_NAME}"
         REGISTRY_HOST = "dev.logicinfo.com"
         REGISTRY_IMAGE_ID = "${REGISTRY_HOST}/${CONTAINER_NAME}"
         REGISTRY_URL = "https://${REGISTRY_HOST}"
         REGISTRY_CREDENTIAL_ID = "adm-jenkins-nexus"
         NEXUS_CREDENTIAL_ID = "adm-jenkins-docker-srv"
-        DOCKER_RUN_EXTRA_ARGS = "--network=postgres-network"
-        CI = 'true' //https://create-react-app.dev/docs/running-tests/#continuous-integration
     }
-
-
 
     options {
         skipStagesAfterUnstable()
     }
     
-    triggers {
-        gitlab(
-            triggerOnPush: true,
-            triggerOnMergeRequest: true,
-            branchFilterType: "NameBasedFilter",
-            includeBranchesSpec: "master",
-            secretToken: "e44ee0dd187f821346a44d388045814b"
-        )
-    }
-
     stages {
-        stage('Install Node Modules') { 
-            steps {
-                sh 'npm install'
-            }
-        }
-        
-        stage('Test App') { 
-            steps {
-                sh 'npm test'
-            }
+        stage('Test') {
+            sh 'echo ${env.GIT_BRANCH}'
         }
 
-        stage('Build App') { 
-            steps {
-                sh 'npm run build'
-            }
-        }
-        
-        stage('Build Docker Image') {
-            steps {
-                script {
-                    dockerImage = docker.build REGISTRY_IMAGE_ID // + ":$BUILD_NUMBER"
-                }
-            }
-        }
-
-        stage('Upload Docker Image to Nexus') {
-            steps{
-                script {
-                    docker.withRegistry( REGISTRY_URL , REGISTRY_CREDENTIAL_ID ) {
-                        dockerImage.push()
-                    }
-                }
-            }
-        }
-        
-        
-        stage('Deploy Container into Docker Host') {
-            steps {
-                script{
-                    withCredentials([sshUserPrivateKey(credentialsId: NEXUS_CREDENTIAL_ID, keyFileVariable: 'dockerHostKeyfile', passphraseVariable: 'dockerHostPassphrase', usernameVariable: 'dockerHostUsername')]) {
-                        dockerRemote.user = dockerHostUsername
-                        dockerRemote.identityFile = dockerHostKeyfile
-                        dockerRemote.passphrase = dockerHostPassphrase
-                        
-                        sshCommand remote: dockerRemote, failOnError: false, command: "docker stop ${CONTAINER_NAME}"
-                        sshCommand remote: dockerRemote, failOnError: false, command: "docker rm ${CONTAINER_NAME}"
-                        sshCommand remote: dockerRemote, failOnError: true, command: "docker pull ${REGISTRY_IMAGE_ID}"
-                        sshCommand remote: dockerRemote, failOnError: true, command: "docker run --name ${CONTAINER_NAME} ${DOCKER_RUN_EXTRA_ARGS} -p ${CONTAINER_EXTERNAL_PORT}:${CONTAINER_PORT} -d ${REGISTRY_IMAGE_ID}"
-                    }
-                }
-            }
-        }
+        //stage('Build App') { 
+        //    agent { docker { image 'node' } }
+        //    steps {
+        //        sh 'npm run build'
+        //    }
+        //}
+        //
+        //stage('Build Docker Image') {
+        //    agent any
+        //    steps {
+        //        script {
+        //            dockerImage = docker.build REGISTRY_IMAGE_ID // + ":$BUILD_NUMBER"
+        //        }
+        //    }
+        //}        
+        //
+        //stage('Deploy Container') {
+        //    agent any
+        //    steps {
+        //        sh 'docker ps -fname=${APP_NAME} -q | xargs --no-run-if-empty docker container stop'
+        //        sh 'docker container ls -a -fname=${APP_NAME} -q | xargs -r docker container rm'
+        //        sh 'docker run --name ${APP_NAME} '
+        //    } 
+        //}        
     }
 }
